@@ -69,6 +69,10 @@ BoolParameter alertOnFatalError("AlertOnFatalError",
                                 "Give a dialog on connection problems rather "
                                 "than exiting immediately", true);
 
+BoolParameter retryOnError("RetryOnError",
+                           "Give a dialog on connection problems rather "
+                           "than exiting immediately and ask for a retry.", true);
+
 StringParameter passwordFile("PasswordFile",
                              "Password file for VNC authentication", "");
 AliasParameter passwd("passwd", "Alias for PasswordFile", &passwordFile);
