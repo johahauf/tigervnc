@@ -64,10 +64,20 @@ static void button_cb(Fl_Widget *widget, void *val) {
 
 UserDialog::UserDialog()
 {
+  user_ = NULL;
+  password_ = NULL;
 }
 
 UserDialog::~UserDialog()
 {
+  if(user_) free(user_);
+  if(password_) free(password_);
+}
+
+void UserDialog::resetPassword()
+{
+  if(user_) { free(user_); user_ = NULL; }
+  if(password_) { free(password_); password_ = NULL; }
 }
 
 void UserDialog::getUserPasswd(bool secure, char** user, char** password)
@@ -75,17 +85,24 @@ void UserDialog::getUserPasswd(bool secure, char** user, char** password)
   CharArray passwordFileStr(passwordFile.getData());
 
   assert(password);
-  char *envUsername = getenv("VNC_USERNAME");
-  char *envPassword = getenv("VNC_PASSWORD");
 
-  if(user && envUsername && envPassword) {
-    *user = strdup(envUsername);
-    *password = strdup(envPassword);
+  if(password_) {
+    if(user_) *user = strdup(user_);
+    *password = strdup(password_);
     return;
   }
 
-  if (!user && envPassword) {
-    *password = strdup(envPassword);
+  user_ = getenv("VNC_USERNAME");
+  password_ = getenv("VNC_PASSWORD");
+
+  if(user && user_ && password_) {
+    *user = strdup(user_);
+    *password = strdup(password_);
+    return;
+  }
+
+  if (!user_ && password_) {
+    *password = strdup(password_);
     return;
   }
 
@@ -101,8 +118,8 @@ void UserDialog::getUserPasswd(bool secure, char** user, char** password)
     fclose(fp);
 
     PlainPasswd passwd(obfPwd);
-    *password = passwd.takeBuf();
-
+    password_ = passwd.takeBuf();
+    *password = strdup(password_);
     return;
   }
 
@@ -187,9 +204,12 @@ void UserDialog::getUserPasswd(bool secure, char** user, char** password)
   while (win->shown()) Fl::wait();
 
   if (ret_val == 0) {
-    if (user)
-      *user = strDup(username->value());
-    *password = strDup(passwd->value());
+    if (user) {
+      user_ = strDup(username->value());
+      *user = strdup(user_);
+    }
+    password_ = strDup(passwd->value());
+    *password =  strdup(password_);
   }
 
   delete win;

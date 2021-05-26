@@ -31,5 +31,6 @@ void abort_vncviewer(const char *error = NULL, ...) __printf_attr(1, 2);
 void exit_vncviewer(const char *error = NULL, ...) __printf_attr(1, 2);
 bool should_exit();
 void about_vncviewer();
+void reset_password_data();
 
 #endif

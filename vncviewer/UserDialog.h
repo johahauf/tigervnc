@@ -36,6 +36,12 @@ public:
   // UserMsgBox callbacks
 
   bool showMsgBox(int flags, const char* title, const char* text);
+
+  void resetPassword();
+
+ private:
+  char *user_;
+  char *password_;
 };
 
 #endif

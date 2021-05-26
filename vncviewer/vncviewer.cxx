@@ -89,6 +89,8 @@ static const char *argv0 = NULL;
 
 static bool exitMainloop = false;
 static string exitError = "";
+static UserDialog dlg;
+
 
 static const char *about_text()
 {
@@ -129,6 +131,10 @@ void abort_vncviewer(const char *error, ...)
   exit(1);
 }
 
+void reset_password_data()
+{
+  dlg.resetPassword();
+}
 
 void exit_vncviewer(const char *error, ...)
 {
@@ -162,7 +168,7 @@ void about_vncviewer()
   fl_message("%s", about_text());
 }
 
-static void run_mainloop(const char* vncserver, network::Socket* sock)
+static void run_mainloop(network::Socket* sock)
 {
   CConn cc(vncServerName, sock);
   int next_timer;
@@ -179,12 +185,12 @@ static void run_mainloop(const char* vncserver, network::Socket* sock)
   }
 }
 
-static void mainloop(const char* vncserver, network::Socket* sock)
+static void mainloop(network::Socket* sock)
 {
   bool stop = false;
   do {
     exitMainloop = false;
-    run_mainloop(vncserver, sock);
+    run_mainloop(sock);
 
     if (exitError.empty())
       stop = true;
@@ -553,8 +559,6 @@ static int mktunnel()
 
 int main(int argc, char** argv)
 {
-  UserDialog dlg;
-
   argv0 = argv[0];
 
   setlocale(LC_ALL, "");
@@ -738,7 +742,7 @@ int main(int argc, char** argv)
 #endif
   }
 
-  mainloop(vncServerName, sock);
+  mainloop(sock);
 
   return 0;
 }
