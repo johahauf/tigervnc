@@ -179,9 +179,10 @@ static void run_mainloop(const char* vncserver, network::Socket* sock)
   }
 }
 
-static void mainloop(const char* vncserver, network::Socket* sock)
+static bool mainloop(const char* vncserver, network::Socket* sock)
 {
   bool stop = false;
+  bool allOk = true;
   do {
     exitMainloop = false;
     run_mainloop(vncserver, sock);
@@ -193,10 +194,13 @@ static void mainloop(const char* vncserver, network::Socket* sock)
     else if (alertOnFatalError) {
       fl_alert("%s", exitError.c_str());
       stop = true;
+      allOk = false;
     }
     
     exitError.clear();
   } while (!stop);
+
+  return allOk;
 }
 
 #ifdef __APPLE__
@@ -738,7 +742,8 @@ int main(int argc, char** argv)
 #endif
   }
 
-  mainloop(vncServerName, sock);
+  if(!mainloop(vncServerName, sock))
+    return 1;
 
   return 0;
 }
