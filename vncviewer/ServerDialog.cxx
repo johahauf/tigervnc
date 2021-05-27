@@ -34,6 +34,7 @@
 #include <algorithm>
 #include <iostream>
 #include <fstream>
+#include <stdlib.h>
 
 #include <os/os.h>
 #include <rfb/Exception.h>
@@ -50,6 +51,21 @@ using namespace std;
 using namespace rfb;
 
 const char* SERVER_HISTORY="tigervnc.history";
+
+static char* usedDir = NULL;
+static void updateUsedDir(const char* filename)
+{
+#ifndef  _WIN32
+  usedDir = strdup(dirname(filename));
+#else
+  char dir[_MAX_DIR], drive[_MAX_DRIVE], path[_MAX_PATH];
+  if(_splitpath_s(filename, drive, _MAX_DRIVE, dir, _MAX_DIR, NULL, 0, NULL, 0) == 0) {
+    if(_makepath_s( working_path, _MAX_PATH, drive, dir, NULL, NULL) == 0) {
+      usedDir = strdup(path);
+    }
+  }
+#endif
+}
 
 ServerDialog::ServerDialog()
   : Fl_Window(450, 160, _("VNC Viewer: Connection Details"))
@@ -151,8 +167,13 @@ void ServerDialog::handleOptions(Fl_Widget *widget, void *data)
 void ServerDialog::handleLoad(Fl_Widget *widget, void *data)
 {
   ServerDialog *dialog = (ServerDialog*)data;
-  Fl_File_Chooser* file_chooser = new Fl_File_Chooser("", _("TigerVNC configuration (*.tigervnc)"), 
+  if(!usedDir) {
+    getuserhomedir(&usedDir);
+  }
+
+  Fl_File_Chooser* file_chooser = new Fl_File_Chooser(usedDir, _("TigerVNC configuration (*.tigervnc)"),
 						      0, _("Select a TigerVNC configuration file"));
+
   file_chooser->preview(0);
   file_chooser->previewButton->hide();
   file_chooser->show();
@@ -168,6 +189,7 @@ void ServerDialog::handleLoad(Fl_Widget *widget, void *data)
   }
   
   const char* filename = file_chooser->value();
+  updateUsedDir(filename);
 
   try {
     dialog->serverName->value(loadViewerParameters(filename));
@@ -184,8 +206,11 @@ void ServerDialog::handleSaveAs(Fl_Widget *widget, void *data)
   ServerDialog *dialog = (ServerDialog*)data;
   const char* servername = dialog->serverName->value();
   const char* filename;
+  if(!usedDir) {
+    getuserhomedir(&usedDir);
+  }
 
-  Fl_File_Chooser* file_chooser = new Fl_File_Chooser("", _("TigerVNC configuration (*.tigervnc)"), 
+  Fl_File_Chooser* file_chooser = new Fl_File_Chooser(usedDir, _("TigerVNC configuration (*.tigervnc)"), 
 						      2, _("Save the TigerVNC configuration to file"));
   
   file_chooser->preview(0);
@@ -205,7 +230,8 @@ void ServerDialog::handleSaveAs(Fl_Widget *widget, void *data)
     }
     
     filename = file_chooser->value();
-    
+    updateUsedDir(filename);
+
     FILE* f = fopen(filename, "r");
     if (f) {
 
